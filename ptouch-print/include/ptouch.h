@@ -94,6 +94,8 @@ int ptouch_ff(ptouch_dev ptdev);
 int ptouch_eject(ptouch_dev ptdev);
 int ptouch_getstatus(ptouch_dev ptdev);
 int ptouch_getmaxwidth(ptouch_dev ptdev);
+int ptouch_printinfo(ptouch_dev ptdev, uint8_t tape_width_mm);
+int ptouch_setmode(ptouch_dev ptdev, uint8_t mode_flags);
 int ptouch_enable_packbits(ptouch_dev ptdev);
 int ptouch_rasterstart(ptouch_dev ptdev);
 int ptouch_sendraster(ptouch_dev ptdev, uint8_t *data, size_t len);

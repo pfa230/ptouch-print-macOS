@@ -450,6 +450,7 @@ int parse_args(int argc, char **argv)
 int main(int argc, char *argv[])
 {
 	int i, lines = 0, tape_width;
+	bool auto_cut=false;
 	char *line[MAX_LINES];
 	gdImage *im=NULL;
 	gdImage *out=NULL;
@@ -507,6 +508,7 @@ int main(int argc, char *argv[])
 			printf("error = %04x\n", ptdev->status->error);
 			exit(0);
 		} else if (strcmp(&argv[i][1], "-image") == 0) {
+			auto_cut = true;
 			im=image_load(argv[++i]);
 			out=img_append(out, im);
 			gdImageDestroy(im);
@@ -549,6 +551,13 @@ int main(int argc, char *argv[])
 		if (save_png) {
 			write_png(out, save_png);
 		} else {
+			if (ptouch_printinfo(ptdev, ptdev->status->media_width) != 0) {
+				fprintf(stderr, _("ptouch_printinfo() failed\n"));
+			}
+			uint8_t mode_flags = auto_cut ? 0x40 : 0x00;
+			if (ptouch_setmode(ptdev, mode_flags) != 0) {
+				fprintf(stderr, _("ptouch_setmode() failed\n"));
+			}
 			print_img(ptdev, out);
 			if (ptouch_eject(ptdev) != 0) {
 				fprintf(stderr, _("ptouch_eject() failed\n"));
