@@ -444,8 +444,8 @@ void usage(char *progname)
 	fprintf(stderr, "\t--fontsize\t\tManually set fontsize\n");
 	fprintf(stderr, "\t--pad <n>\t\tAdd n pixels padding (blank tape)\n");
 	fprintf(stderr, "\t--cut\t\t\tFlush current label and cut\n");
-	fprintf(stderr, "\t--precut\t\tEnable printer auto-cut before printing\n");
-	fprintf(stderr, "\t--postcut\t\tCut the tape after printing\n");
+	fprintf(stderr, "\t--no-precut\t\tDisable automatic pre-cut\n");
+	fprintf(stderr, "\t--no-postcut\tDisable cut after printing\n");
 	exit(1);
 }
 
@@ -503,9 +503,9 @@ int parse_args(int argc, char **argv)
 			}
 		} else if (strcmp(&argv[i][1], "-cut") == 0) {
 			continue;
-		} else if (strcmp(&argv[i][1], "-precut") == 0) {
+		} else if (strcmp(&argv[i][1], "-no-precut") == 0) {
 			continue;
-		} else if (strcmp(&argv[i][1], "-postcut") == 0) {
+		} else if (strcmp(&argv[i][1], "-no-postcut") == 0) {
 			continue;
 		} else if (strcmp(&argv[i][1], "-version") == 0) {
 			fprintf(stderr, _("ptouch-print by Dominic Radermacher, for Mac by David Phillip Oster version %s \n"), VERSION);
@@ -520,8 +520,8 @@ int parse_args(int argc, char **argv)
 int main(int argc, char *argv[])
 {
 	int i, lines = 0, tape_width;
-	bool do_precut=false;
-	bool do_postcut=false;
+	bool do_precut=true;
+	bool do_postcut=true;
 	char *line[MAX_LINES];
 	gdImage *im=NULL;
 	gdImage *out=NULL;
@@ -621,10 +621,10 @@ int main(int argc, char *argv[])
 			if (flush_print_job(ptdev, &out, do_precut, true, false, ptdev->status->media_width) != 0) {
 				return -1;
 			}
-		} else if (strcmp(&argv[i][1], "-precut") == 0) {
-			do_precut = true;
-		} else if (strcmp(&argv[i][1], "-postcut") == 0) {
-			do_postcut = true;
+		} else if (strcmp(&argv[i][1], "-no-precut") == 0) {
+			do_precut = false;
+		} else if (strcmp(&argv[i][1], "-no-postcut") == 0) {
+			do_postcut = false;
 		} else {
 			usage(argv[0]);
 		}

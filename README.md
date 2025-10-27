@@ -1,108 +1,143 @@
-**Notice:** This repo was a clone of the one on [Dominic Radermacher's website](https://mockmoon-cybernetics.ch/computer/p-touch2430pc/), and he is the original author. The original is available at (https://github.com/clarkewd/ptouch-print/), with his permission, to help increase visibility of the project and to encourage collaboration and further development.
+# ptouch-print (extended fork)
 
+**Notice:** This repository is a fork of DavidPhillipOster/ptouch-print-macOS, itself derived from Dominic Radermacher's original ptouch-print project. All credit for the base code goes to those authors.
 
-# ptouch-print
+This fork focuses on label cutting control and predictable image handling for Brother P-Touch printers on macOS.
 
-ptouch-print is a command line tool to print labels on Brother P-Touch
-printers on macOS.
+## What's different here?
 
-There is no need to install the printer via CUPS, the printer is accessed
-directly via libusb.
+- **Extended cutting controls.** Adds runtime options for automatic pre-cut, explicit chain cuts between segments, and optional post-cut suppression. These changes are aimed at reducing leader waste on devices that support hardware cutting.
+- **No automatic image scaling.** PNG assets are sent to the printer at their original resolution. Prepare artwork at the correct tape pixel height before printing.
+- **Target hardware.** Features have only been tested on the Brother **PT-2730**. Other models in `libptouch.c` remain unverified.
 
-The tool was written for and tested with the `PT-2730`, but it should also
-work with the `PT-2430PC` and `PT-1230PC` (untested so far). Maybe others work too (please report USB VID and PID so I can include support for further models, too).
+## Quick start
 
-**Models in `libptouch.c` include:**
+1. Open `ptouch-print.xcodeproj` in Xcode and build the `ptouch-print` target.
+2. The command-line tool is produced at `build/Release/ptouch-print`.
+3. Connect the printer via USB and confirm the tape info:
 
-- PT-2420PC
-- PT-1230PC
-- PT-2430PC
-- PT-2730
-- PT-P700 ( see note below about mode switch )
-- PT-D450
+```sh
+./build/Release/ptouch-print --info
+```
 
-**Further info can be found at:**
-https://mockmoon-cybernetics.ch/computer/p-touch2430pc/
+4. Print a simple label:
 
-### Compile instructions:
+```sh
+./build/Release/ptouch-print --text "Hello"
+```
 
-  The project is self-contained. There are no additional dependencies.
+## Usage guide
 
-  Open the Xcode project. Use the menu command **Product** > **Run**
+### Command syntax
 
-### PT-2730 on Mac:
+```text
+ptouch-print [options] <print-command(s)>
+```
 
-Brother dropped support for the PT-2730 with the release of macOS Big Sur (version 11.0) in 2020.
+- Options set global behavior (font, output mode, cutter defaults).
+- Print commands append content to the current label buffer in the order you provide them.
+- The buffer prints at the end of the command line, or immediately when you pass `--cut`.
 
-I am furious that Brother dropped support. How hard can it be, it's just a simple USB device?
+### Options
 
-So I brought this Linux command line tool to macOS. (I checked that it wasn't already in macPorts.)
+- `--font <file|name>`: Use a font file or font name (default: `Helvetica`).
+- `--fontsize <n>`: Force a specific font size in points.
+- `--writepng <file>`: Write the output to a PNG instead of printing. This only works with **exactly one** `--text` command.
+- `--info`: Print tape and device info (max print width in pixels, media type, width in mm, colors, error code) and exit.
+- `--debug`: Enable verbose debug output while rendering/printing.
+- `--version`: Print version info and exit.
 
-The commandline tool depended on two other libraries: 
+### Print commands
 
-* libUSB - so I grabbed the relevant source files, and include them here.
+- `--image <file>`: Print the given PNG image (black/white recommended).
+- `--text <text> [<text> ...]`: Print 1-4 lines of text. If the text contains spaces, wrap it in quotes.
+- `--cutmark`: Print a dashed cut mark on the tape.
+- `--pad <n>`: Add `n` pixels of blank tape (1-256 px; values outside this range are clamped to 1).
+- `--cut`: Flush the current label, cut it, and start a new label buffer.
+- `--no-precut`: Disable automatic pre-cut before printing.
+- `--no-postcut`: Disable cutting after the final label in the command line.
 
-* libgd - a graphics manipulation library. I just re-implemented what I needed from it in terms of 
-the Core Graphics framework that ships with macOS.
+### Cutting behavior
 
-For fonts, You can use any of the font names in **/Applications/Font Book**. For fonts with variants
-in Font Book like **Bold** or **Italic** just append those modifiers. **Helvetica** is the default font.
+- **Default:** Both pre-cut and post-cut are enabled.
+- **Pre-cut** (`--no-precut` to disable): The printer performs an automatic pre-cut/advance if the hardware supports it.
+- **Post-cut** (`--no-postcut` to disable): The printer cuts after the final label at the end of the command line.
+- **Explicit cut** (`--cut`): Forces a cut immediately and keeps printing subsequent content into a new label buffer.
+- `--cut` cannot be combined with `--writepng`.
 
-## example command lines:
+### Image preparation
 
-`~$ ptouch-print --font "Snell Roundhand Black" --text "Hello World  " --writepng "ptouch.png"`
+- Only PNG files are supported.
+- Image height must be **less than or equal to** the maximum print width for the current tape. Use `--info` to see the exact pixel width.
+- Images are not scaled; they are centered within the printable width.
+- Pixels are thresholded to on/off at a grayscale value of 128, so high-contrast, two-color art works best.
 
+### Text rendering notes
 
-<span style="color:gray">PT-2730 found on USB bus 4, device 17</span>
+- `--text` accepts 1-4 lines after a single `--text` flag (e.g., `--text "Line 1" "Line 2"`).
+- If `--fontsize` is not set, font size is automatically chosen to fit the tape width and line count.
+- Use `--font` to provide a font name or a path to a font file.
 
-<span style="color:gray">choosing font size=95</span>
+### Examples
 
+Print two lines with a custom font:
 
-`~$ ptouch-print --font "Snell Roundhand" --text "Hello World  " --writepng "ptouch1.png"`
+```sh
+./build/Release/ptouch-print --text "Line 1" "Line 2"
+```
 
-<span style="color:gray">PT-2730 found on USB bus 4, device 17</span>
+Print a PNG image (height must match tape width):
 
-<span style="color:gray">choosing font size=95</span>
+```sh
+./build/Release/ptouch-print --image ./assets/logo.png
+```
 
+Create a PNG preview (text only, single --text command):
 
-And lastly: Here is an actual photo of the output as printed on my label maker:
+```sh
+./build/Release/ptouch-print --writepng preview.png --text "Preview"
+```
 
-![](images/print.jpg)
+Print two labels with a cut between them:
 
-### PT-2730
+```sh
+./build/Release/ptouch-print \
+  --text "First" \
+  --cut \
+  --text "Second"
+```
 
-My **PT-2730** always wants to put 1" of leader on each print. If the print is just simple
-text, the **PT-2730** doesn't print the first half of the first character. But if I include a small
-.png first, then the whole png and the following text print just fine. I generally test by having
-`ptouch-print` write to a png first, as a preview of what will print.
+Add padding and a cut mark on a continuous strip:
 
-Here is the actual command line I used to print labels for the jars in my refrigerator:
+```sh
+./build/Release/ptouch-print \
+  --no-postcut \
+  --text "Section A" \
+  --pad 40 \
+  --cutmark \
+  --text "Section B"
+```
 
-`ptouch-print --image /Users/david/spiral.png --cutmark --text \ Sauerkraut\  --cutmark --text \ Yeast\  --cutmark --text \ Yeast\  --cutmark --text \ Yeast\  `
+## Building
 
-where `spiral.png` is: ![](images/spiral.png)
+The project remains self-contained. Open `ptouch-print.xcodeproj` in Xcode and use **Product > Run**, or build the command-line tool via the provided scheme.
 
-multiple lines of text would be:
+### CLI build
 
-`ptouch-print --text "line 1" "line 2" "line 3"`
+List schemes:
 
-### PT-P700:
+```sh
+xcodebuild -list -project ptouch-print.xcodeproj
+```
 
-- As the PT-P700 does not have a toggle switch for the printer mode, you may need to switch the mode first
-- If you plug in the PT-P700 and the green light above the PLite button is on, the printer won't be recognized by `ptouch`. You must hold down the PLite button for ~ 2 seconds and the light will turn off and the system will find the device again.
-- This step allowed it to be detected as `vid 0x04F9 pid 0x2061` insetad of `vid 0x04F9 pid 0x2064`
-- This allows it to be found, (eg: `./ptouch-print --info`) and also puts it into a mode that it can be interfaced with
+Build Release from the CLI:
 
+```sh
+xcodebuild -project ptouch-print.xcodeproj -scheme ptouch-print -configuration Release
+```
 
-### A Note from Dominic's website
+The binary is produced at `build/Release/ptouch-print`.
 
-"Dear visitor, currently I have absolutely no time for improvements on this project (my free time currently is about one or two hours PER MONTH)..."
+## License
 
-### Collaboration
-
-You may still, of course, contact Dominic directly if you'd like. But I think GitHub is easier for collaboration, and he has given me permission to host a clone of his repo here, passing code contributions back to him.
-
-### License
-
-The original ptouch-print is GNU GPL 3, so my work is too. libusb is under the MIT license.
-
+This fork retains the GNU GPL 3 license of the upstream projects. Included `libusb` sources remain under their original MIT license.
