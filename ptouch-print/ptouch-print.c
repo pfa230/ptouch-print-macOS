@@ -367,6 +367,67 @@ gdImage *img_padding(int tape_width, int length)
 	return out;
 }
 
+static int flush_print_job(ptouch_dev ptdev, gdImage **out, bool do_precut, bool cut_after, bool final_label, uint8_t media_width_mm)
+{
+	gdImage *label=*out;
+	if (label == NULL) {
+		return 0;
+	}
+	if (save_png) {
+		fprintf(stderr, _("--cut is not supported together with --writepng\n"));
+		return -1;
+	}
+	bool needs_auto_cut = do_precut || (cut_after && !final_label);
+	if (needs_auto_cut) {
+		if (ptouch_printinfo(ptdev, media_width_mm) != 0) {
+			fprintf(stderr, _("ptouch_printinfo() failed\n"));
+			gdImageDestroy(label);
+			*out=NULL;
+			return -1;
+		}
+	}
+	uint8_t mode_flags = needs_auto_cut ? 0x40 : 0x00;
+	if (ptouch_setmode(ptdev, mode_flags) != 0) {
+		fprintf(stderr, _("ptouch_setmode() failed\n"));
+		gdImageDestroy(label);
+		*out=NULL;
+		return -1;
+	}
+	bool want_chain = (!final_label) || !cut_after;
+	uint8_t advanced_flags = want_chain ? 0x00 : 0x08;
+	if (ptouch_setadvanced(ptdev, advanced_flags) != 0) {
+		fprintf(stderr, _("ptouch_setadvanced() failed\n"));
+		gdImageDestroy(label);
+		*out=NULL;
+		return -1;
+	}
+	if (print_img(ptdev, label) != 0) {
+		fprintf(stderr, _("could not print image\n"));
+		gdImageDestroy(label);
+		*out=NULL;
+		return -1;
+	}
+	int rc;
+	if (cut_after && final_label) {
+		rc = ptouch_eject(ptdev);
+	} else {
+		rc = ptouch_ff(ptdev);
+	}
+	if (rc != 0) {
+		if (cut_after) {
+			fprintf(stderr, _("ptouch_eject() failed\n"));
+		} else {
+			fprintf(stderr, _("ptouch_ff() failed\n"));
+		}
+		gdImageDestroy(label);
+		*out=NULL;
+		return -1;
+	}
+	gdImageDestroy(label);
+	*out=NULL;
+	return 0;
+}
+
 void usage(char *progname)
 {
 	fprintf(stderr, "usage: %s [options] <print-command(s)>\n", progname);
@@ -382,6 +443,9 @@ void usage(char *progname)
 	fprintf(stderr, "\t--cutmark\t\tPrint a mark where the tape should be cut\n");
 	fprintf(stderr, "\t--fontsize\t\tManually set fontsize\n");
 	fprintf(stderr, "\t--pad <n>\t\tAdd n pixels padding (blank tape)\n");
+	fprintf(stderr, "\t--cut\t\t\tFlush current label and cut\n");
+	fprintf(stderr, "\t--precut\t\tEnable printer auto-cut before printing\n");
+	fprintf(stderr, "\t--postcut\t\tCut the tape after printing\n");
 	exit(1);
 }
 
@@ -437,6 +501,12 @@ int parse_args(int argc, char **argv)
 				}
 				i++;
 			}
+		} else if (strcmp(&argv[i][1], "-cut") == 0) {
+			continue;
+		} else if (strcmp(&argv[i][1], "-precut") == 0) {
+			continue;
+		} else if (strcmp(&argv[i][1], "-postcut") == 0) {
+			continue;
 		} else if (strcmp(&argv[i][1], "-version") == 0) {
 			fprintf(stderr, _("ptouch-print by Dominic Radermacher, for Mac by David Phillip Oster version %s \n"), VERSION);
 			exit(0);
@@ -450,7 +520,8 @@ int parse_args(int argc, char **argv)
 int main(int argc, char *argv[])
 {
 	int i, lines = 0, tape_width;
-	bool auto_cut=false;
+	bool do_precut=false;
+	bool do_postcut=false;
 	char *line[MAX_LINES];
 	gdImage *im=NULL;
 	gdImage *out=NULL;
@@ -508,7 +579,6 @@ int main(int argc, char *argv[])
 			printf("error = %04x\n", ptdev->status->error);
 			exit(0);
 		} else if (strcmp(&argv[i][1], "-image") == 0) {
-			auto_cut = true;
 			im=image_load(argv[++i]);
 			out=img_append(out, im);
 			gdImageDestroy(im);
@@ -543,6 +613,18 @@ int main(int argc, char *argv[])
 			im = NULL;
 		} else if (strcmp(&argv[i][1], "-debug") == 0) {
 			debug = true;
+		} else if (strcmp(&argv[i][1], "-cut") == 0) {
+			if (save_png) {
+				fprintf(stderr, _("--cut cannot be combined with --writepng\n"));
+				return 1;
+			}
+			if (flush_print_job(ptdev, &out, do_precut, true, false, ptdev->status->media_width) != 0) {
+				return -1;
+			}
+		} else if (strcmp(&argv[i][1], "-precut") == 0) {
+			do_precut = true;
+		} else if (strcmp(&argv[i][1], "-postcut") == 0) {
+			do_postcut = true;
 		} else {
 			usage(argv[0]);
 		}
@@ -550,21 +632,13 @@ int main(int argc, char *argv[])
 	if (out) {
 		if (save_png) {
 			write_png(out, save_png);
+			gdImageDestroy(out);
+			out = NULL;
 		} else {
-			if (ptouch_printinfo(ptdev, ptdev->status->media_width) != 0) {
-				fprintf(stderr, _("ptouch_printinfo() failed\n"));
-			}
-			uint8_t mode_flags = auto_cut ? 0x40 : 0x00;
-			if (ptouch_setmode(ptdev, mode_flags) != 0) {
-				fprintf(stderr, _("ptouch_setmode() failed\n"));
-			}
-			print_img(ptdev, out);
-			if (ptouch_eject(ptdev) != 0) {
-				fprintf(stderr, _("ptouch_eject() failed\n"));
+			if (flush_print_job(ptdev, &out, do_precut, do_postcut, true, ptdev->status->media_width) != 0) {
 				return -1;
 			}
 		}
-		gdImageDestroy(out);
 	}
 	if (im != NULL) {
 		gdImageDestroy(im);
