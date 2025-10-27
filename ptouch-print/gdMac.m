@@ -61,9 +61,12 @@ gdImage *gdImageCreateFromPng(FILE *inFile) {
       CGRect r = CGRectMake(0, 0, image.size.width, image.size.height);
       CGImageRef ref = [image CGImageForProposedRect:&r context:nil hints:nil];
       if (ref) {
-        gdImage *result = gdImageCreatePalette(image.size.width, image.size.height);
+        size_t pixelWidth = CGImageGetWidth(ref);
+        size_t pixelHeight = CGImageGetHeight(ref);
+        CGRect pixelRect = CGRectMake(0, 0, pixelWidth, pixelHeight);
+        gdImage *result = gdImageCreatePalette((int)pixelWidth, (int)pixelHeight);
         if (result) {
-          CGContextDrawImage(result, r, ref);
+          CGContextDrawImage(result, pixelRect, ref);
           return result;
         }
       }
@@ -221,4 +224,3 @@ int gdImageSX(gdImage *im) {
 int gdImageSY(gdImage *im) {
  return (int) CGBitmapContextGetHeight(im);
 }
-

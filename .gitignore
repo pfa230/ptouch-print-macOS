@@ -31,6 +31,7 @@ Makefile.in
 /m4
 src/.deps/
 src/.dirstamp
+.DS_Store
 
 # Log files
 *.log
@@ -38,3 +39,5 @@ src/.dirstamp
 # Documents
 ABOUT-NLS
 INSTALL
+
+build

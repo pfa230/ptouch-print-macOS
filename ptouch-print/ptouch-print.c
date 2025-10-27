@@ -109,7 +109,9 @@ int print_img(ptouch_dev ptdev, gdImage *im)
 	for (k=0; k<gdImageSX(im); k+=1) {
 		memset(rasterline, 0, sizeof(rasterline));
 		for (i=0; i<gdImageSY(im); i+=1) {
-			if (gdImageGetPixel(im, k, gdImageSY(im)-1-i) == d) {
+			int pixel_value = gdImageGetPixel(im, k, gdImageSY(im)-1-i);
+			// gdMac backend stores grayscale brightness, so threshold to decide on/off pixels.
+			if ((d == 0 && pixel_value <= 127) || (d != 0 && pixel_value >= 128)) {
 				rasterline_setpixel(rasterline, offset+i);
 			}
 		}
@@ -506,13 +508,6 @@ int main(int argc, char *argv[])
 			exit(0);
 		} else if (strcmp(&argv[i][1], "-image") == 0) {
 			im=image_load(argv[++i]);
-      if (tape_width < gdImageSY(im)) {
-        gdImage *imScaled = gdImageCreateScaled(im, tape_width/(float)gdImageSY(im));
-        if (imScaled) {
-          gdImageDestroy(im);
-          im = imScaled;
-        }
-      }
 			out=img_append(out, im);
 			gdImageDestroy(im);
 			im = NULL;
