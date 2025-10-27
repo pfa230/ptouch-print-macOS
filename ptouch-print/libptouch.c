@@ -306,6 +306,12 @@ int ptouch_setmode(ptouch_dev ptdev, uint8_t mode_flags)
 	return ptouch_send(ptdev, cmd, sizeof(cmd));
 }
 
+int ptouch_setadvanced(ptouch_dev ptdev, uint8_t advanced_flags)
+{
+	uint8_t cmd[] = {0x1b, 0x69, 0x4b, advanced_flags};
+	return ptouch_send(ptdev, cmd, sizeof(cmd));
+}
+
 int ptouch_sendraster(ptouch_dev ptdev, uint8_t *data, size_t len)
 {
 	uint8_t buf[64];
