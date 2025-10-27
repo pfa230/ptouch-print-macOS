@@ -1,6 +1,10 @@
 
 date		ver	description of changes
 
+2025-10-27	0.0.3	- Add support for --cut between items
+			- Precut support
+			- Fix for anti-aliased images
+
 2023-12-19	0.0.2	- If an image is too tall for the tape, scale it down
 			  uniformly to fit
 
