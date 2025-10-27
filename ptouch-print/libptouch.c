@@ -294,6 +294,18 @@ int ptouch_getmaxwidth(ptouch_dev ptdev)
 	return ptdev->tape_width_px;
 }
 
+int ptouch_printinfo(ptouch_dev ptdev, uint8_t tape_width_mm)
+{
+	uint8_t cmd[] = {0x1b, 0x69, 0x63, 0x84, 0x00, tape_width_mm, 0x00, 0x00};
+	return ptouch_send(ptdev, cmd, sizeof(cmd));
+}
+
+int ptouch_setmode(ptouch_dev ptdev, uint8_t mode_flags)
+{
+	uint8_t cmd[] = {0x1b, 0x69, 0x4d, mode_flags};
+	return ptouch_send(ptdev, cmd, sizeof(cmd));
+}
+
 int ptouch_sendraster(ptouch_dev ptdev, uint8_t *data, size_t len)
 {
 	uint8_t buf[64];
