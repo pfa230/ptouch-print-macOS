@@ -118,6 +118,20 @@ Add padding and a cut mark on a continuous strip:
   --text "Section B"
 ```
 
+### Batch printing from a zip
+
+`print_zip_on_ptouch.sh` is a small helper that prints every PNG inside a zip file, cutting between each image.
+
+```sh
+./print_zip_on_ptouch.sh /path/to/labels.zip
+```
+
+Notes:
+
+- Images are printed in sorted path order.
+- Requires one of: `unzip`, `7z`, or macOS `ditto`.
+- If `ptouch-print` is not on your `PATH`, set `PTOUCH_PRINT` (or build via Xcode and it will fall back to `./build/Release/ptouch-print`).
+
 ## Building
 
 The project remains self-contained. Open `ptouch-print.xcodeproj` in Xcode and use **Product > Run**, or build the command-line tool via the provided scheme.
