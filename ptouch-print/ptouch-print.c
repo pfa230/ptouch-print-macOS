@@ -138,16 +138,24 @@ gdImage *image_load(const char *file)
 	gdImage *img=NULL;
 
 	if ((f = fopen(file, "rb")) == NULL) {	/* error cant open file */
+		fprintf(stderr, _("could not open image '%s'\n"), file);
 		return NULL;
 	}
 	if (fread(d, sizeof(d), 1, f) != 1) {
+		fclose(f);
+		fprintf(stderr, _("could not read image '%s'\n"), file);
 		return NULL;
 	}
 	rewind(f);
 	if (memcmp(d, png, 8) == 0) {
 		img=gdImageCreateFromPng(f);
+	} else {
+		fprintf(stderr, _("unsupported image format for '%s' (PNG only)\n"), file);
 	}
 	fclose(f);
+	if (img == NULL) {
+		fprintf(stderr, _("could not load image '%s'\n"), file);
+	}
 	return img;
 }
 
@@ -435,6 +443,9 @@ void usage(char *progname)
 	fprintf(stderr, "\t--font <file>\t\tuse font <file> or <name>\n");
 	fprintf(stderr, "\t--writepng <file>\tinstead of printing, write output to png file\n");
 	fprintf(stderr, "\t\t\t\tThis currently works only when using\n\t\t\t\tEXACTLY ONE --text statement\n");
+	fprintf(stderr, "\t--info\t\t\tPrint tape and device info and exit\n");
+	fprintf(stderr, "\t--debug\t\t\tEnable verbose debug output\n");
+	fprintf(stderr, "\t--version\t\tPrint version info and exit\n");
 	fprintf(stderr, "print-commands:\n");
 	fprintf(stderr, "\t--image <file>\t\tprint the given image which must be a 2 color\n");
 	fprintf(stderr, "\t\t\t\t(black/white) png\n");
@@ -580,6 +591,9 @@ int main(int argc, char *argv[])
 			exit(0);
 		} else if (strcmp(&argv[i][1], "-image") == 0) {
 			im=image_load(argv[++i]);
+			if (im == NULL) {
+				return 1;
+			}
 			out=img_append(out, im);
 			gdImageDestroy(im);
 			im = NULL;
