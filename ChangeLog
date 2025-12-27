@@ -1,7 +1,7 @@
 
 date		ver	description of changes
 
-2025-10-27	0.0.3	- Add support for --cut between items
+2025-12-27	2.0.0	- Add support for --cut between items
 			- Precut support
 			- Fix for anti-aliased images
 
