@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		634EE1562B2E513700FAF585 /* ptouch-print.c in Sources */ = {isa = PBXBuildFile; fileRef = 634EE1552B2E513700FAF585 /* ptouch-print.c */; };
 		634EE1592B2E5D7B00FAF585 /* gdMac.m in Sources */ = {isa = PBXBuildFile; fileRef = 634EE1582B2E5D7B00FAF585 /* gdMac.m */; };
+		A1B2C3D4E5F6071829304150 /* btMac.m in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304151 /* btMac.m */; };
 		634EE16C2B2EADC900FAF585 /* darwin_usb.c in Sources */ = {isa = PBXBuildFile; fileRef = 634EE15E2B2EADC900FAF585 /* darwin_usb.c */; };
 		634EE16D2B2EADC900FAF585 /* io.c in Sources */ = {isa = PBXBuildFile; fileRef = 634EE15F2B2EADC900FAF585 /* io.c */; };
 		634EE16E2B2EADC900FAF585 /* events_posix.c in Sources */ = {isa = PBXBuildFile; fileRef = 634EE1602B2EADC900FAF585 /* events_posix.c */; };
@@ -47,6 +48,7 @@
 		634EE1552B2E513700FAF585 /* ptouch-print.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "ptouch-print.c"; path = "ptouch-print/ptouch-print.c"; sourceTree = SOURCE_ROOT; };
 		634EE1572B2E51F400FAF585 /* gd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gd.h; sourceTree = "<group>"; };
 		634EE1582B2E5D7B00FAF585 /* gdMac.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = gdMac.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6071829304151 /* btMac.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = btMac.m; sourceTree = "<group>"; };
 		634EE15B2B2EADC900FAF585 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = version.h; sourceTree = "<group>"; };
 		634EE15C2B2EADC900FAF585 /* threads_posix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = threads_posix.h; sourceTree = "<group>"; };
 		634EE15D2B2EADC900FAF585 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				638FB4862B2E386500B03DA2 /* libptouch.c */,
 				634EE1552B2E513700FAF585 /* ptouch-print.c */,
 				634EE1582B2E5D7B00FAF585 /* gdMac.m */,
+				A1B2C3D4E5F6071829304151 /* btMac.m */,
 			);
 			path = "ptouch-print";
 			sourceTree = "<group>";
@@ -216,6 +219,7 @@
 				634EE16D2B2EADC900FAF585 /* io.c in Sources */,
 				634EE1712B2EADC900FAF585 /* threads_posix.c in Sources */,
 				634EE1592B2E5D7B00FAF585 /* gdMac.m in Sources */,
+				A1B2C3D4E5F6071829304150 /* btMac.m in Sources */,
 				634EE16F2B2EADC900FAF585 /* core.c in Sources */,
 				634EE1702B2EADC900FAF585 /* sync.c in Sources */,
 				634EE1562B2E513700FAF585 /* ptouch-print.c in Sources */,
@@ -350,7 +354,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "ptouch-print/Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.pfa230.ptouch-print";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -359,7 +366,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "ptouch-print/Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.github.pfa230.ptouch-print";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

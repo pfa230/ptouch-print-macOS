@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.github.pfa230.ptouch-print</string>
+	<key>CFBundleName</key>
+	<string>ptouch-print</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>ptouch-print connects to Brother P-Touch label printers over Bluetooth.</string>
+</dict>
+</plist>

@@ -30,7 +30,8 @@
 
 struct _pt_tape_info {
 	uint8_t mm;		/* Tape width in mm */
-	uint8_t px;		/* Printing area in px */
+	uint16_t px;		/* Printing area in px at 180 dpi */
+	uint16_t px360;		/* Printing area in px at 360 dpi */
 };
 
 #define FLAG_NONE		(0x00)
@@ -38,13 +39,19 @@ struct _pt_tape_info {
 #define FLAG_RASTER_PACKBITS	(0x02)
 #define FLAG_PLITE		(0x04)
 #define FLAG_P700_INIT		(0x08)
+#define FLAG_USE_INFO_CMD	(0x10)	/* send ESC i z print information command */
 
 struct _pt_dev_info {
 	int vid;		/* USB vendor ID */
 	int pid;		/* USB product ID */
 	char *name;
-	int max_px;		/* Maximum pixel width that can be printed */
+	int max_px;		/* Maximum pixel width that can be printed (printhead pins) */
+	int dpi;		/* Dots per inch of the printhead */
 	int flags;
+	/* Pins to shift the print area from the center of the printhead.
+	   See Brother "Raster Command Reference PT-P900/P900W/P950NW/P910BT",
+	   section 2.3.5 "Raster line". 0 = centered. */
+	int pin_offset;
 };
 typedef struct _pt_dev_info *pt_dev_info;
 
@@ -81,11 +88,18 @@ struct _ptouch_dev {
 	libusb_device_handle *h;
 	pt_dev_info devinfo;
 	pt_dev_stat status;
-	uint8_t tape_width_px;
+	uint16_t tape_width_px;
+	int bt;			/* connected over Bluetooth instead of USB */
 };
 typedef struct _ptouch_dev *ptouch_dev;
 
+extern int ptouch_debug;	/* verbose debug output (--debug) */
+
 int ptouch_open(ptouch_dev *ptdev);
+int ptouch_open_bt(ptouch_dev *ptdev, const char *want);
+int ptouch_read(ptouch_dev ptdev, uint8_t *buf, int len, int timeout_ms, int *tx);
+int ptouch_info_cmd(ptouch_dev ptdev, int raster_lines);
+int ptouch_wait_print_done(ptouch_dev ptdev, int timeout_sec);
 int ptouch_close(ptouch_dev ptdev);
 int ptouch_send(ptouch_dev ptdev, uint8_t *data, size_t len);
 int ptouch_init(ptouch_dev ptdev);
